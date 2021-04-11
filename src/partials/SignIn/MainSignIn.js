@@ -115,7 +115,7 @@ function MainSignIn() {
                 <div className="max-w-xs mt-4 mx-auto sm:max-w-none sm:flex sm:justify-center">
                   <a
                     className="text-sm"
-                    href="https://help.superrare.co/en/articles/3575628-sign-in-faq-troubleshooting"
+                    href="#"
                     style={{
                       textDecoration: "none",
                       borderBottom: "solid 0.5px",
