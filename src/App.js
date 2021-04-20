@@ -1,13 +1,17 @@
 import React, { useEffect } from "react";
 import { Switch, Route, useLocation, Redirect } from "react-router-dom";
-import Header from "./partials/Header";
-import Footer from "./partials/Footer";
+
 import "./css/style.scss";
 import "./App.css";
 import AOS from "aos";
 import { focusHandling } from "cruip-js-toolkit";
 import SignIn from "./pages/SignIn";
-import Form from "./pages/Form";
+import Search from "./pages/Search";
+import OfferRide from "./pages/OfferRide";
+import RideDetail from "./pages/RideDetail";
+import MyRides from "./pages/MyRides";
+import MyDriver from "./pages/MyDriver";
+
 function App() {
   const location = useLocation();
 
@@ -31,12 +35,20 @@ function App() {
     <>
       <Switch>
         <Route path="/signin" component={SignIn} />
+        <Route path="/search" exact component={Search} />
+        <Route path="/offerride" exact component={OfferRide} />
+        <Route path="/ridedetail/:id" exact component={RideDetail} />
+        <Route path="/myrides" exact component={MyRides} />
+        <Route path="/mydriver" exact component={MyDriver} />
+
         {!localStorage.getItem("walletAddress") ? (
           <>
-            <Redirect from="/" exact to="/signin" />
+            <Redirect from="*" exact to="/signin" />
           </>
         ) : (
-          <Route path="/" exact component={Form} />
+          <>
+            <Redirect from="*" to="/search" />
+          </>
         )}
       </Switch>
     </>
