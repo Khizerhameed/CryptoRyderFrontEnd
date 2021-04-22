@@ -3,6 +3,7 @@ import { useHistory, useParams } from "react-router-dom";
 import Header from "../partials/Header";
 import Footer from "../partials/Footer";
 import * as Icons from "phosphor-react";
+
 import Web3 from "web3";
 import ReactStars from "react-rating-stars-component";
 import config from "../config";
@@ -10,12 +11,12 @@ import { Link } from "react-router-dom";
 import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
 import Loader from "react-loader-spinner";
 import "../css/form.css";
-import { object } from "prop-types";
 
 let web3;
 let accounts;
 let authentication;
 let rideShare;
+let expectedPayment;
 let rideShareJson = require("../contracts/Rideshare.json");
 const auth = require("../contracts/Authentication.json");
 
@@ -23,8 +24,36 @@ function RideDetail() {
   let history = useHistory();
   const { id } = useParams();
 
-  const [RideData, setRideData] = useState([]);
+  const [RideData, setRideData] = useState("");
+  const [itemData, setItemData] = useState("");
+  const [driverData, setDriverData] = useState("");
   const [LoaderSpin, setLoader] = useState(true);
+  const RideBook = async () => {
+    let res = await rideShare.methods
+      .joinRide(id)
+      .send({ from: accounts[0], value: expectedPayment });
+    history.push("/myrides");
+  };
+
+  function convertDateTime(time) {
+    let covertedArrivalHours, convertedArrivalMinutes;
+
+    var dA = parseInt(time);
+    var dAA = new Date(dA);
+
+    if (dAA.getHours() >= 0 && dAA.getHours() < 10) {
+      covertedArrivalHours = "0" + dAA.getHours();
+    } else {
+      covertedArrivalHours = dAA.getHours();
+    }
+    if (dAA.getMinutes() >= 0 && dAA.getMinutes() < 10) {
+      convertedArrivalMinutes = "0" + dAA.getMinutes();
+    } else {
+      convertedArrivalMinutes = dAA.getMinutes();
+    }
+    let arrivalTime = covertedArrivalHours + ":" + convertedArrivalMinutes;
+    return arrivalTime;
+  }
   async function metamaskConnection() {
     web3 = new Web3(window.ethereum);
     accounts = await web3.eth.getAccounts();
@@ -40,51 +69,27 @@ function RideDetail() {
         promiseArr = await rideShare.methods.rides(id).call();
 
         let d = promiseArr.driver;
+        expectedPayment = parseInt(promiseArr.drivingCost);
+
         promiseArr2 = await authentication.methods.getUserData(d).call();
 
         let name = promiseArr2.name;
         driverName = await authentication.methods.bytes32ToString(name).call();
 
-        let covertedArrivalHours,
-          convertedArrivalMinutes,
-          convertedDepartureHours,
-          convertedDepartureMinutes;
-        var dA = parseInt(promiseArr.arrivaltime);
-        var dAA = new Date(dA);
-        var dD = parseInt(promiseArr.departureTime);
-        var dDD = new Date(dD);
-        if (dAA.getHours() > 0 && dAA.getHours() < 10) {
-          covertedArrivalHours = "0" + dAA.getHours();
-        } else {
-          covertedArrivalHours = dAA.getHours();
-        }
-        if (dAA.getMinutes() > 0 && dAA.getMinutes() < 10) {
-          convertedArrivalMinutes = "0" + dAA.getMinutes();
-        } else {
-          convertedArrivalMinutes = dAA.getMinutes();
-        }
-        if (dDD.getHours() > 0 && dDD.getHours() < 10) {
-          convertedDepartureHours = "0" + dDD.getHours();
-        } else {
-          convertedDepartureHours = dDD.getHours();
-        }
-        if (dDD.getMinutes() > 0 && dDD.getMinutes() < 10) {
-          convertedDepartureMinutes = "0" + dDD.getMinutes();
-        } else {
-          convertedDepartureMinutes = dDD.getMinutes();
-        }
-        let departureTime =
-          convertedDepartureHours + ":" + convertedDepartureMinutes;
-        let arrivalTime = covertedArrivalHours + ":" + convertedArrivalMinutes;
+        Promise.all([promiseArr, promiseArr2, driverName]).then((res) => {
+          let dep = convertDateTime(promiseArr.departureTime);
 
-        let data = [];
-        data.item = promiseArr;
+          let arr = convertDateTime(promiseArr.arrivaltime);
 
-        data.departureTime = departureTime;
-        data.arrivalTime = arrivalTime;
-        data.driverName = driverName;
-        data.driverData = promiseArr2;
-        setRideData(data);
+          let data = [];
+          data.departureTime = dep;
+          data.arrivalTime = arr;
+          data.driverName = driverName;
+          setItemData(res[0]);
+          setDriverData(res[1]);
+          setRideData(data);
+          console.log(res[1].driverRating);
+        });
       } catch (error) {
         console.log(error);
       }
@@ -142,26 +147,28 @@ function RideDetail() {
                   </div>
                   <div className="  grid gap-6 grid-cols-12 border-b border-black">
                     <div className="col-span-2 mb-3 font-bold">
-                      <p>15:15</p>
-                      <p>15:15</p>
+                      <p>{RideData.departureTime}</p>
+                      <p>{RideData.arrivalTime}</p>
                     </div>
                     <div className="col-span-2 mt-2">
                       <Icons.Path size={68} className="-mt-2" />
                     </div>
                     <div className="col-span-3 font-bold">
-                      <p>Montreal</p>
-                      <p>Alcatnaz</p>
+                      <p>{itemData.originAddress}</p>
+                      <p>{itemData.destAddress}</p>
                     </div>
                     <div className="col-span-4 mt-3 text-right ">
-                      <span className="text-base font-extrabold">1 ETH</span>
+                      <span className="text-base font-extrabold">
+                        {itemData.drivingCost} ETH
+                      </span>
                     </div>
                   </div>
 
                   {/* Second Line */}
                   <div className=" mt-3 grid gap-6  grid-cols-12 border-b border-black">
                     <div className="col-span-10 ml-3 text-left mt-3 ">
-                      <span className="text-sm font-extrabold text-black-1000">
-                        Andrew
+                      <span className="text-sm uppercase font-extrabold text-black-1000">
+                        {RideData.driverName}
                       </span>
                       <ReactStars
                         count={5}
@@ -180,8 +187,8 @@ function RideDetail() {
                   {/* Third Line */}
                   <div className=" mt-3 grid gap-6  grid-cols-12 border-b border-black">
                     <div className="col-span-10 ml-3 text-left mt-3 ">
-                      <span className="text-sm font-extrabold text-black-1000">
-                        RENAULT DUSTER
+                      <span className="text-base uppercase font-extrabold text-black-1000">
+                        {itemData.carName}
                       </span>
                       <p>White</p>
                     </div>
@@ -191,7 +198,10 @@ function RideDetail() {
                     </div>
                   </div>
                   <div className="text-center mt-20">
-                    <button class="block w-full max-w-xs mx-auto bg-indigo-500 hover:bg-indigo-700 focus:bg-indigo-700 text-white rounded-lg px-3 py-3 font-semibold">
+                    <button
+                      onClick={RideBook}
+                      className="block w-full max-w-xs mx-auto bg-indigo-500 hover:bg-indigo-700 focus:bg-indigo-700 text-white rounded-lg px-3 py-3 font-semibold"
+                    >
                       BOOK THIS RIDE
                     </button>{" "}
                   </div>

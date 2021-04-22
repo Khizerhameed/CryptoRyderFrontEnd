@@ -26,7 +26,6 @@ function OfferRide() {
     setRideForm({ ...rideForm, [e.target.name]: e.target.value });
   };
 
-
   async function SubmitForm() {
     var ArrivalTime = rideForm.arrivalTime.split(":");
     var DepartureTime = rideForm.departureTime.split(":");
@@ -46,6 +45,9 @@ function OfferRide() {
     const ArrivalTimeStamp = ArrivalDate.getTime();
     const DepartureTimeStamp = DepartureDate.getTime();
     let d = new Date();
+    let hours = d.getHours() + 3;
+    d.setHours(hours);
+    const unpaidTimeStamp = d.getTime();
     try {
       let res = await rideShare.methods
         .createRide(
@@ -54,11 +56,11 @@ function OfferRide() {
           rideForm.capacity,
           rideForm.origin,
           rideForm.destination,
-          d.getTime(),
+          rideForm.confirmedBy,
           0,
           DepartureTimeStamp,
           ArrivalTimeStamp,
-          5
+          unpaidTimeStamp
         )
         .send({ from: accounts[0] });
       console.log(res);
@@ -268,7 +270,7 @@ function OfferRide() {
                       <div className="flex -mx-3 mt-5">
                         <div className="w-full px-3 mb-12">
                           <label for="" className="text-xs font-semibold px-1">
-                            Confirmed By
+                            Confirmed At
                           </label>
                           <div className="flex">
                             <div className="w-10 z-10 pl-1 text-center pointer-events-none flex items-center justify-center"></div>
@@ -277,7 +279,7 @@ function OfferRide() {
                               name="confirmedBy"
                               type="input"
                               className="w-full -ml-10 pl-10 pr-3 py-2 rounded-lg border-2 border-gray-200 outline-none focus:border-indigo-500"
-                              placeholder="Confirmed By"
+                              placeholder="Confirmed At"
                             />
                           </div>
                         </div>

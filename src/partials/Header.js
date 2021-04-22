@@ -76,7 +76,7 @@ function Header() {
                     </Dropdown.Toggle>
 
                     <Dropdown.Menu>
-                      <Dropdown.Item href="/profile">Profile</Dropdown.Item>
+                      {/* <Dropdown.Item href="/profile">Profile</Dropdown.Item> */}
                       <Dropdown.Item href="/myrides">My Rides</Dropdown.Item>
                       <Dropdown.Item href="/mydriver">My Driver</Dropdown.Item>
                       <Dropdown.Divider />

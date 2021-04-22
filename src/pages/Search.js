@@ -46,6 +46,7 @@ function Search() {
 
     try {
       let rideCount = await rideShare.methods.getRideCount().call();
+      console.log(rideCount);
       let promiseArr = [];
       let promiseArr2 = [];
       let driverName = [];
@@ -120,12 +121,12 @@ function Search() {
     var dA = parseInt(time);
     var dAA = new Date(dA);
 
-    if (dAA.getHours() > 0 && dAA.getHours() < 10) {
+    if (dAA.getHours() >= 0 && dAA.getHours() < 10) {
       covertedArrivalHours = "0" + dAA.getHours();
     } else {
       covertedArrivalHours = dAA.getHours();
     }
-    if (dAA.getMinutes() > 0 && dAA.getMinutes() < 10) {
+    if (dAA.getMinutes() >= 0 && dAA.getMinutes() < 10) {
       convertedArrivalMinutes = "0" + dAA.getMinutes();
     } else {
       convertedArrivalMinutes = dAA.getMinutes();
@@ -147,17 +148,24 @@ function Search() {
       let promiseArr2 = [];
       let driverName = [];
       let rideId = [];
-      let j = 0;
 
       try {
         for (let i = 0; i < rideCount; i++) {
-          let res = await rideShare.methods.rides(i).call();
+          let res = await rideShare.methods
+            .rides(i)
+            .call({ from: accounts[0] });
 
           promiseArr.push(res);
           let d = promiseArr[i].driver;
-          promiseArr2.push(await authentication.methods.getUserData(d).call());
+
+          promiseArr2.push(
+            await authentication.methods
+              .getUserData("0xBF54aA4fcbd6A828f55831f51E99ed54f5D65F47")
+              .call({ from: accounts[0] })
+          );
 
           let name = promiseArr2[i].name;
+          console.log(name);
           driverName.push(
             await authentication.methods.bytes32ToString(name).call()
           );
@@ -308,7 +316,7 @@ function Search() {
                               <div className="col-span-2 mt-2">
                                 <Icons.Path size={68} className="-mt-2" />
                               </div>
-                              <div className="col-span-3 font-bold">
+                              <div className="col-span-3 text-left font-bold">
                                 <p>{d.item.originAddress}</p>
                                 <p>{d.item.destAddress}</p>
                               </div>
