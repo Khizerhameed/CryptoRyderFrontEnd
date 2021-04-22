@@ -67,7 +67,6 @@ function RideDetail() {
       let driverName;
       try {
         promiseArr = await rideShare.methods.rides(id).call();
-
         let d = promiseArr.driver;
         expectedPayment = parseInt(promiseArr.drivingCost);
 

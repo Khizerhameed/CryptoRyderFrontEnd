@@ -83,6 +83,7 @@ function OfferRide() {
   async function metamaskConnection() {
     web3 = new Web3(window.ethereum);
     accounts = await web3.eth.getAccounts();
+
     await window.ethereum.enable();
     rideShare = new web3.eth.Contract(rideShareJson.abi, config.RideShare);
   }

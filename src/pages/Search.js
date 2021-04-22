@@ -58,6 +58,7 @@ function Search() {
           let res = await rideShare.methods.rides(i).call();
           // console.log(res.originAddress);
           // console.log(res.destAddress);
+          console.log(res);
           if (
             res.originAddress === searchForm.origin &&
             res.destAddress === searchForm.destination
@@ -151,16 +152,14 @@ function Search() {
 
       try {
         for (let i = 0; i < rideCount; i++) {
-          let res = await rideShare.methods
-            .rides(i)
-            .call({ from: accounts[0] });
+          let res = await rideShare.methods.rides(i).call();
 
           promiseArr.push(res);
           let d = promiseArr[i].driver;
 
           promiseArr2.push(
             await authentication.methods
-              .getUserData("0xBF54aA4fcbd6A828f55831f51E99ed54f5D65F47")
+              .getUserData(d)
               .call({ from: accounts[0] })
           );
 
