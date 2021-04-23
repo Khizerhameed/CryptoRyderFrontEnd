@@ -23,7 +23,8 @@ const auth = require("../contracts/Authentication.json");
 function RideDetail() {
   let history = useHistory();
   const { id } = useParams();
-
+  let driverRate;
+  const [driverRating, setDriverRating] = useState(0);
   const [RideData, setRideData] = useState("");
   const [itemData, setItemData] = useState("");
   const [driverData, setDriverData] = useState("");
@@ -65,30 +66,36 @@ function RideDetail() {
       let promiseArr;
       let promiseArr2;
       let driverName;
+      let driverRating;
       try {
         promiseArr = await rideShare.methods.rides(id).call();
         let d = promiseArr.driver;
         expectedPayment = parseInt(promiseArr.drivingCost);
 
-        promiseArr2 = await authentication.methods.getUserData(d).call();
+        promiseArr2 = await authentication.methods.users(d).call();
 
         let name = promiseArr2.name;
+        driverRating = promiseArr2.driverRating;
+
         driverName = await authentication.methods.bytes32ToString(name).call();
 
-        Promise.all([promiseArr, promiseArr2, driverName]).then((res) => {
-          let dep = convertDateTime(promiseArr.departureTime);
+        Promise.all([promiseArr, promiseArr2, driverName, driverRating]).then(
+          (res) => {
+            let dep = convertDateTime(promiseArr.departureTime);
 
-          let arr = convertDateTime(promiseArr.arrivaltime);
+            let arr = convertDateTime(promiseArr.arrivaltime);
 
-          let data = [];
-          data.departureTime = dep;
-          data.arrivalTime = arr;
-          data.driverName = driverName;
-          setItemData(res[0]);
-          setDriverData(res[1]);
-          setRideData(data);
-          console.log(res[1].driverRating);
-        });
+            let data = [];
+            data.departureTime = dep;
+            data.arrivalTime = arr;
+            data.driverName = driverName;
+            setDriverRating(driverRating);
+            setItemData(res[0]);
+            setDriverData(res[1]);
+            setRideData(data);
+            setLoader(false);
+          }
+        );
       } catch (error) {
         console.log(error);
       }
@@ -134,78 +141,91 @@ function RideDetail() {
           <div className="relative max-w-2xl mx-auto  sm:px-6">
             <div className="py-2 md:py-20">
               {/* Items */}
-              <div className="  mx-3 grid gap-6 md:grid-cols-1 lg:grid-cols-1  md:max-w-2xl lg:max-w-none">
-                {/* 1st item */}
-                <div
-                  style={{ backgroundColor: "blue", color: "white" }}
-                  className=" p-5 relative flex flex-col py-5 rounded shadow-2xl "
-                >
-                  {/* First Line */}
-                  <div className="text-center mb-5 text-3xl font-bold font-Lobster">
-                    <span>Tuesday, 5 April</span>
-                  </div>
-                  <div className="  grid gap-6 grid-cols-12 border-b border-black">
-                    <div className="col-span-2 mb-3 font-bold">
-                      <p>{RideData.departureTime}</p>
-                      <p>{RideData.arrivalTime}</p>
-                    </div>
-                    <div className="col-span-2 mt-2">
-                      <Icons.Path size={68} className="-mt-2" />
-                    </div>
-                    <div className="col-span-3 font-bold">
-                      <p>{itemData.originAddress}</p>
-                      <p>{itemData.destAddress}</p>
-                    </div>
-                    <div className="col-span-4 mt-3 text-right ">
-                      <span className="text-base font-extrabold">
-                        {itemData.drivingCost} ETH
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Second Line */}
-                  <div className=" mt-3 grid gap-6  grid-cols-12 border-b border-black">
-                    <div className="col-span-10 ml-3 text-left mt-3 ">
-                      <span className="text-sm uppercase font-extrabold text-black-1000">
-                        {RideData.driverName}
-                      </span>
-                      <ReactStars
-                        count={5}
-                        size={20}
-                        edit={false}
-                        activeColor="#ffd700"
-                        value={3}
-                      />
-                    </div>
-
-                    <div className="col-span-2 -ml-5 mt-2 mb-4">
-                      <Icons.UserCircle size={48} />
-                    </div>
-                  </div>
-
-                  {/* Third Line */}
-                  <div className=" mt-3 grid gap-6  grid-cols-12 border-b border-black">
-                    <div className="col-span-10 ml-3 text-left mt-3 ">
-                      <span className="text-base uppercase font-extrabold text-black-1000">
-                        {itemData.carName}
-                      </span>
-                      <p>White</p>
-                    </div>
-
-                    <div className="col-span-2 -ml-5 mt-2 mb-4">
-                      <Icons.Car size={48} />
-                    </div>
-                  </div>
-                  <div className="text-center mt-20">
-                    <button
-                      onClick={RideBook}
-                      className="block w-full max-w-xs mx-auto bg-indigo-500 hover:bg-indigo-700 focus:bg-indigo-700 text-white rounded-lg px-3 py-3 font-semibold"
-                    >
-                      BOOK THIS RIDE
-                    </button>{" "}
-                  </div>
+              {LoaderSpin ? (
+                <div className="container text-center">
+                  <Loader
+                    type="Circles"
+                    color="blue"
+                    height={100}
+                    width={100}
+                  />
                 </div>
-              </div>
+              ) : (
+                <>
+                  <div className="  mx-3 grid gap-6 md:grid-cols-1 lg:grid-cols-1  md:max-w-2xl lg:max-w-none">
+                    {/* 1st item */}
+                    <div
+                      style={{ backgroundColor: "blue", color: "white" }}
+                      className=" p-5 relative flex flex-col py-5 rounded shadow-2xl "
+                    >
+                      {/* First Line */}
+                      <div className="text-center mb-5 text-3xl font-bold font-Lobster">
+                        <span>Tuesday, 5 April</span>
+                      </div>
+                      <div className="  grid gap-6 grid-cols-12 border-b border-black">
+                        <div className="col-span-2 mb-3 font-bold">
+                          <p>{RideData.departureTime}</p>
+                          <p>{RideData.arrivalTime}</p>
+                        </div>
+                        <div className="col-span-2 mt-2">
+                          <Icons.Path size={68} className="-mt-2" />
+                        </div>
+                        <div className="col-span-3 font-bold">
+                          <p>{itemData.originAddress}</p>
+                          <p>{itemData.destAddress}</p>
+                        </div>
+                        <div className="col-span-4 mt-3 text-right ">
+                          <span className="text-base font-extrabold">
+                            {itemData.drivingCost} ETH
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Second Line */}
+                      <div className=" mt-3 grid gap-6  grid-cols-12 border-b border-black">
+                        <div className="col-span-10 ml-3 text-left mt-3 ">
+                          <span className="text-sm uppercase font-extrabold text-black-1000">
+                            {RideData.driverName}
+                          </span>
+                          <ReactStars
+                            count={5}
+                            size={20}
+                            edit={false}
+                            activeColor="#ffd700"
+                            value={driverRating}
+                          />
+                        </div>
+
+                        <div className="col-span-2 -ml-5 mt-2 mb-4">
+                          <Icons.UserCircle size={48} />
+                        </div>
+                      </div>
+
+                      {/* Third Line */}
+                      <div className=" mt-3 grid gap-6  grid-cols-12 border-b border-black">
+                        <div className="col-span-10 ml-3 text-left mt-3 ">
+                          <span className="text-base uppercase font-extrabold text-black-1000">
+                            {itemData.carName}
+                          </span>
+                          <p>White</p>
+                        </div>
+
+                        <div className="col-span-2 -ml-5 mt-2 mb-4">
+                          <Icons.Car size={48} />
+                        </div>
+                      </div>
+                      <div className="text-center mt-20">
+                        <button
+                          onClick={RideBook}
+                          className="block w-full max-w-xs mx-auto bg-indigo-500 hover:bg-indigo-700 focus:bg-indigo-700 text-white rounded-lg px-3 py-3 font-semibold"
+                        >
+                          BOOK THIS RIDE
+                        </button>{" "}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </section>

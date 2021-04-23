@@ -13,6 +13,8 @@ import OfferRide from "./pages/OfferRide";
 import RideDetail from "./pages/RideDetail";
 import MyRides from "./pages/MyRides";
 import MyDriver from "./pages/MyDriver";
+import Profile from "./pages/Profile";
+
 let accounts;
 let web3;
 function App() {
@@ -62,6 +64,7 @@ function App() {
         <Route path="/ridedetail/:id" exact component={RideDetail} />
         <Route path="/myrides" exact component={MyRides} />
         <Route path="/mydriver" exact component={MyDriver} />
+        <Route path="/profile" component={Profile} />
 
         {!localStorage.getItem("walletAddress") ? (
           <>

@@ -23,7 +23,8 @@ const auth = require("../contracts/Authentication.json");
 
 function MyRides() {
   let history = useHistory();
-  const [rating, setRating] = useState(0);
+  const [driverRating, setDriverRating] = useState(0);
+  const [rating, setRating] = useState("");
   const [DateHeader, setDateHeader] = useState("");
   const [noRide, setNoRide] = useState(false);
   const [RideData, setRideData] = useState("");
@@ -71,7 +72,6 @@ function MyRides() {
     rideId = await rideShare.methods
       .getRiderData()
       .call({ from: localStorage.getItem("walletAddress") });
-    console.log(rideId);
     if (rideId > 0) {
       rideId = rideId - 1;
 
@@ -91,37 +91,44 @@ function MyRides() {
         let promiseArr;
         let promiseArr2;
         let driverName;
+        let driverRating;
         try {
           promiseArr = await rideShare.methods.rides(rideId).call();
 
           let d = promiseArr.driver;
           expectedPayment = parseInt(promiseArr.drivingCost);
 
-          promiseArr2 = await authentication.methods.getUserData(d).call();
+          promiseArr2 = await authentication.methods.users(d).call();
 
           let name = promiseArr2.name;
+          driverRating = promiseArr2.driverRating;
+
           driverName = await authentication.methods
             .bytes32ToString(name)
             .call();
 
-          Promise.all([promiseArr, promiseArr2, driverName]).then((res) => {
-            let dep = convertDateTime(promiseArr.departureTime);
-            let depD = new Date(parseInt(res[0].departureTime)).toString();
-            let depDate = depD.split(" ");
-            let display = depDate[0] + ", " + depDate[1] + " " + depDate[2];
-            setDateHeader(display);
+          Promise.all([promiseArr, promiseArr2, driverName, driverRating]).then(
+            (res) => {
+              let dep = convertDateTime(promiseArr.departureTime);
+              let depD = new Date(parseInt(res[0].departureTime)).toString();
+              let depDate = depD.split(" ");
+              let display = depDate[0] + ", " + depDate[1] + " " + depDate[2];
+              setDateHeader(display);
 
-            let arr = convertDateTime(promiseArr.arrivaltime);
+              let arr = convertDateTime(promiseArr.arrivaltime);
 
-            let data = [];
+              let data = [];
 
-            data.departureTime = dep;
-            data.arrivalTime = arr;
-            data.driverName = driverName;
-            setItemData(res[0]);
-            setDriverData(res[1]);
-            setRideData(data);
-          });
+              data.departureTime = dep;
+              data.arrivalTime = arr;
+              data.driverName = driverName;
+              setDriverRating(driverRating);
+              setItemData(res[0]);
+              setDriverData(res[1]);
+              setRideData(data);
+              setLoader(false);
+            }
+          );
         } catch (error) {
           console.log(error);
         }
@@ -130,6 +137,16 @@ function MyRides() {
       }
     } else {
       setNoRide(true);
+    }
+  }
+  async function CancelRide() {
+    try {
+      let res = await rideShare.methods
+        .cancelRide(rideId)
+        .send({ from: accounts[0] });
+      console.log(res);
+    } catch (error) {
+      console.log(error);
     }
   }
   async function driverMet() {
@@ -150,186 +167,188 @@ function MyRides() {
   }, []);
   return (
     <>
-      {!noRide ? (
+      {LoaderSpin ? (
+        <div className="container text-center">
+          <Loader type="Circles" color="blue" height={100} width={100} />
+        </div>
+      ) : (
         <>
-          <div>
-            <Header />
-            <div className="relative">
-              {/* Header */}
-              <div
-                className="relative  md:pt-32 pb-8 "
-                style={{
-                  paddingTop: 200,
-                  backgroundImage:
-                    "url(https://cdn.blablacar.com/kairos/assets/build/images/carpool_only_large-1fb250954893109fa160f6fb41c3ef3d.svg)",
-                  backgroundRepeat: "no-repeat",
-                  backgroundSize: "cover",
-                  backgroundPosition: "center center",
-                }}
-              >
-                <div className="px-4 text-center md:px-10 mx-auto w-full mb-12 ">
-                  <div>
-                    <h1 className="font-Lobster text-white sm:text-6xl">
-                      Book a Ride?
-                    </h1>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <section className="relative mt-40 ">
-              {/* Section background (needs .relative class on parent and next sibling elements) */}
-
-              <div className="absolute left-0 right-0 bottom-0 m-auto transform translate-y-1/2"></div>
-              <h1>{noRide}</h1>
-              <div className="relative max-w-2xl mx-auto  sm:px-6">
-                <div className="py-2 md:py-20">
-                  {/* Items */}
-                  <div className="  mx-3 grid gap-6 md:grid-cols-1 lg:grid-cols-1  md:max-w-2xl lg:max-w-none">
-                    {/* 1st item */}
-                    <div
-                      style={{ backgroundColor: "blue", color: "white" }}
-                      className=" p-5 relative flex flex-col py-5 rounded shadow-2xl "
-                    >
-                      {/* First Line */}
-                      <div className="text-center mb-5 text-3xl font-bold font-Lobster">
-                        <span>{DateHeader}</span>
+          {!noRide ? (
+            <>
+              <div>
+                <Header />
+                <div className="relative">
+                  {/* Header */}
+                  <div
+                    className="relative  md:pt-32 pb-8 "
+                    style={{
+                      paddingTop: 200,
+                      backgroundImage:
+                        "url(https://cdn.blablacar.com/kairos/assets/build/images/carpool_only_large-1fb250954893109fa160f6fb41c3ef3d.svg)",
+                      backgroundRepeat: "no-repeat",
+                      backgroundSize: "cover",
+                      backgroundPosition: "center center",
+                    }}
+                  >
+                    <div className="px-4 text-center md:px-10 mx-auto w-full mb-12 ">
+                      <div>
+                        <h1 className="font-Lobster text-white sm:text-6xl">
+                          Book a Ride?
+                        </h1>
                       </div>
-                      <div className="  grid gap-6 grid-cols-12 border-b border-black">
-                        <div className="col-span-2 mb-3 font-bold">
-                          <p>{RideData.departureTime}</p>
-                          <p>{RideData.arrivalTime}</p>
-                        </div>
-                        <div className="col-span-2 mt-2">
-                          <Icons.Path size={68} className="-mt-2" />
-                        </div>
-                        <div className="col-span-3 font-bold">
-                          <p>{itemData.originAddress}</p>
-                          <p>{itemData.destAddress}</p>
-                        </div>
-                        <div className="col-span-4 mt-3 text-right ">
-                          <span className="text-base font-extrabold">
-                            {itemData.drivingCost} ETH
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Second Line */}
-                      <div className=" mt-3 grid gap-6  grid-cols-12 border-b border-black">
-                        <div className="col-span-10 ml-3 text-left mt-3 ">
-                          <span className="text-sm uppercase font-extrabold text-black-1000">
-                            {RideData.driverName}
-                          </span>
-                          <ReactStars
-                            count={5}
-                            size={20}
-                            edit={false}
-                            activeColor="#ffd700"
-                            value={3}
-                          />
-                        </div>
-
-                        <div className="col-span-2 -ml-5 mt-2 mb-4">
-                          <Icons.UserCircle size={48} />
-                        </div>
-                      </div>
-
-                      {/* Third Line */}
-                      <div className=" mt-3 grid gap-6  grid-cols-12 border-b border-black">
-                        <div className="col-span-10 ml-3 text-left mt-3 ">
-                          <span className="text-base uppercase font-extrabold text-black-1000">
-                            {itemData.carName}
-                          </span>
-                          <p>White</p>
-                        </div>
-
-                        <div className="col-span-2 -ml-5 mt-2 mb-4">
-                          <Icons.Car size={48} />
-                        </div>
-                      </div>
-                      {passengerStatus.initital ? (
-                        <>
-                          <div
-                            className="text-right
-                   mt-20"
-                          >
-                            {/* <button className="btn btn-danger mr-4">
-                              Cancel
-                            </button> */}
-                            <button
-                              onClick={driverMet}
-                              className="btn btn-primary px-5 p-2"
-                            >
-                              Driver Met
-                            </button>
-                          </div>
-                        </>
-                      ) : null}
-                      {passengerStatus.driverMet ? (
-                        <>
-                          <div
-                            className="text-right
-                   mt-20"
-                          >
-                            <h5 style={{ color: "red" }}>
-                              Waiting for Driver Response!
-                            </h5>
-                          </div>
-                        </>
-                      ) : null}
-                      {/*div*/}
-                      {passengerStatus.enRoute ? (
-                        <>
-                          <div className="mt-20">
-                            <ReactStars
-                              onChange={RatingSetter}
-                              count={5}
-                              size={20}
-                              activeColor="#ffd700"
-                            />
-                          </div>
-                          <div>
-                            {/* <input
-                          placeholder="Rating"
-                          type="number"
-                          className="mr-5 text-center px-5 py-2"
-                          min="0"
-                          max="4"
-                          style={{ color: "black" }}
-                        /> */}
-
-                            <button
-                              onClick={Arrived}
-                              className="btn btn-success px-5 p-2"
-                            >
-                              Arrived
-                            </button>
-                          </div>
-                        </>
-                      ) : null}
-
-                      {passengerStatus.completed ? (
-                        <>
-                          <div
-                            className="text-right
-                   mt-20"
-                          >
-                            <h5 style={{ color: "red" }}>Ride Completed</h5>
-                          </div>
-                        </>
-                      ) : null}
                     </div>
                   </div>
                 </div>
-              </div>
-            </section>
 
-            <Footer />
-          </div>
+                <section className="relative mt-40 ">
+                  {/* Section background (needs .relative class on parent and next sibling elements) */}
+
+                  <div className="absolute left-0 right-0 bottom-0 m-auto transform translate-y-1/2"></div>
+                  <h1>{noRide}</h1>
+                  <div className="relative max-w-2xl mx-auto  sm:px-6">
+                    <div className="py-2 md:py-20">
+                      {/* Items */}
+                      <div className="  mx-3 grid gap-6 md:grid-cols-1 lg:grid-cols-1  md:max-w-2xl lg:max-w-none">
+                        {/* 1st item */}
+                        <div
+                          style={{ backgroundColor: "blue", color: "white" }}
+                          className=" p-5 relative flex flex-col py-5 rounded shadow-2xl "
+                        >
+                          {/* First Line */}
+                          <div className="text-center mb-5 text-3xl font-bold font-Lobster">
+                            <span>{DateHeader}</span>
+                          </div>
+                          <div className="  grid gap-6 grid-cols-12 border-b border-black">
+                            <div className="col-span-2 mb-3 font-bold">
+                              <p>{RideData.departureTime}</p>
+                              <p>{RideData.arrivalTime}</p>
+                            </div>
+                            <div className="col-span-2 mt-2">
+                              <Icons.Path size={68} className="-mt-2" />
+                            </div>
+                            <div className="col-span-3 font-bold">
+                              <p>{itemData.originAddress}</p>
+                              <p>{itemData.destAddress}</p>
+                            </div>
+                            <div className="col-span-4 mt-3 text-right ">
+                              <span className="text-base font-extrabold">
+                                {itemData.drivingCost} ETH
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Second Line */}
+                          <div className=" mt-3 grid gap-6  grid-cols-12 border-b border-black">
+                            <div className="col-span-10 ml-3 text-left mt-3 ">
+                              <span className="text-sm uppercase font-extrabold text-black-1000">
+                                {RideData.driverName}
+                              </span>
+                              <ReactStars
+                                count={5}
+                                size={20}
+                                edit={false}
+                                activeColor="#ffd700"
+                                value={driverRating}
+                              />
+                            </div>
+
+                            <div className="col-span-2 -ml-5 mt-2 mb-4">
+                              <Icons.UserCircle size={48} />
+                            </div>
+                          </div>
+
+                          {/* Third Line */}
+                          <div className=" mt-3 grid gap-6  grid-cols-12 border-b border-black">
+                            <div className="col-span-10 ml-3 text-left mt-3 ">
+                              <span className="text-base uppercase font-extrabold text-black-1000">
+                                {itemData.carName}
+                              </span>
+                              <p>White</p>
+                            </div>
+
+                            <div className="col-span-2 -ml-5 mt-2 mb-4">
+                              <Icons.Car size={48} />
+                            </div>
+                          </div>
+                          {passengerStatus.initital ? (
+                            <>
+                              <div
+                                className="text-right
+                   mt-20"
+                              >
+                                <button
+                                  onClick={CancelRide}
+                                  className="btn btn-danger mr-4"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  onClick={driverMet}
+                                  className="btn btn-primary px-5 p-2"
+                                >
+                                  Confirm Driver Met
+                                </button>
+                              </div>
+                            </>
+                          ) : null}
+                          {passengerStatus.driverMet ? (
+                            <>
+                              <div
+                                className="text-right
+                   mt-20"
+                              >
+                                <h5 style={{ color: "red" }}>
+                                  Waiting for Driver Response!
+                                </h5>
+                              </div>
+                            </>
+                          ) : null}
+                          {/*div*/}
+                          {passengerStatus.enRoute ? (
+                            <>
+                              <div className="mt-20">
+                                <ReactStars
+                                  onChange={RatingSetter}
+                                  count={5}
+                                  size={20}
+                                  activeColor="#ffd700"
+                                />
+                              </div>
+                              <div>
+                                <button
+                                  onClick={Arrived}
+                                  className="btn btn-success px-5 p-2"
+                                >
+                                  Arrived
+                                </button>
+                              </div>
+                            </>
+                          ) : null}
+
+                          {passengerStatus.completed ? (
+                            <>
+                              <div
+                                className="text-right
+                   mt-20"
+                              >
+                                <h5 style={{ color: "red" }}>Ride Completed</h5>
+                              </div>
+                            </>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <Footer />
+              </div>
+            </>
+          ) : (
+            <h1>No Ride Found!!</h1>
+          )}
         </>
-      ) : (
-        <h1>No Ride Found!!</h1>
-      )}
+      )}{" "}
     </>
   );
 }

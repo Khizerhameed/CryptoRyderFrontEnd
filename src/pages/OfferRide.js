@@ -59,8 +59,7 @@ function OfferRide() {
           rideForm.confirmedBy,
           0,
           DepartureTimeStamp,
-          ArrivalTimeStamp,
-          unpaidTimeStamp
+          ArrivalTimeStamp
         )
         .send({ from: accounts[0] });
       console.log(res);
@@ -271,7 +270,7 @@ function OfferRide() {
                       <div className="flex -mx-3 mt-5">
                         <div className="w-full px-3 mb-12">
                           <label for="" className="text-xs font-semibold px-1">
-                            Confirmed At
+                            Confirmed By
                           </label>
                           <div className="flex">
                             <div className="w-10 z-10 pl-1 text-center pointer-events-none flex items-center justify-center"></div>
@@ -292,7 +291,7 @@ function OfferRide() {
                           </label>
                           <div className="flex">
                             <div className="w-10 z-10 pl-5 text-center pointer-events-none flex items-center justify-center">
-                              <i>ETH</i>
+                              <i>wei</i>
                             </div>
                             <input
                               onChange={(e) => onChangeInput(e)}

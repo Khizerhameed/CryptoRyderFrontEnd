@@ -51,6 +51,7 @@ function Search() {
       let promiseArr2 = [];
       let driverName = [];
       let rideId = [];
+      let driverRating = [];
       let j = 0;
 
       try {
@@ -65,11 +66,12 @@ function Search() {
           ) {
             promiseArr.push(res);
             let d = promiseArr[j].driver;
-            promiseArr2.push(
-              await authentication.methods.getUserData(d).call()
-            );
+            promiseArr2.push(await authentication.methods.users(d).call());
 
             let name = promiseArr2[j].name;
+
+            driverRating.push(promiseArr2[j].driverRating);
+
             driverName.push(
               await authentication.methods.bytes32ToString(name).call()
             );
@@ -83,6 +85,7 @@ function Search() {
               return {
                 item: item,
                 name: driverName[index],
+                driverRating: driverRating[index],
               };
             });
             setDriver(driver);
@@ -149,6 +152,7 @@ function Search() {
       let promiseArr2 = [];
       let driverName = [];
       let rideId = [];
+      let driverRating = [];
 
       try {
         for (let i = 0; i < rideCount; i++) {
@@ -158,13 +162,13 @@ function Search() {
           let d = promiseArr[i].driver;
 
           promiseArr2.push(
-            await authentication.methods
-              .getUserData(d)
-              .call({ from: accounts[0] })
+            await authentication.methods.users(d).call({ from: accounts[0] })
           );
 
           let name = promiseArr2[i].name;
-          console.log(name);
+          driverRating.push(promiseArr2[i].driverRating);
+          console.log(promiseArr2[i].driverRating);
+
           driverName.push(
             await authentication.methods.bytes32ToString(name).call()
           );
@@ -176,6 +180,7 @@ function Search() {
               return {
                 item: item,
                 name: driverName[index],
+                driverRating: driverRating[index],
               };
             });
             setDriver(driver);
@@ -339,7 +344,7 @@ function Search() {
                                   size={20}
                                   edit={false}
                                   activeColor="#ffd700"
-                                  value={3}
+                                  value={Driver[key].driverRating}
                                 />
                               </div>
                               <div className="col-span-6 mt-3 text-right ">
